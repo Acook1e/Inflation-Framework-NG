@@ -1,25 +1,13 @@
 #pragma once
 
-class InflationManager
+#include "morph.h"
+
+namespace InflationManager
 {
-public:
-  InflationManager& GetSingleton()
-  {
-    static InflationManager singleton;
-    return singleton;
-  }
+float GetInflation(RE::Actor* actor, Morph::MorphType type);
+void SetInflation(RE::Actor* actor, Morph::MorphType type, float value);
 
-  struct InflationData
-  {
-    std::uint32_t morphHash;
-    float inflatedValue;
-  };
-
-  static void SaveData();
-  static void LoadData();
-  static void RevertData();
-
-private:
-  std::unordered_map<RE::FormID, std::vector<InflationData>> inflationDataMap;
-  std::unordered_map<RE::FormID, std::vector<InflationData>> runtimeInflationDataMap;
-};
+void SaveData();
+void LoadData();
+void RevertData();
+};  // namespace InflationManager

@@ -1,25 +1,31 @@
 {
     "Belly": {
         "SliderName": "Belly",
-        "FallbackName": [],
         "Min": 0.0,
         "Max": 1.0
     },
-    "Pregnancy": {
-        "SliderName": "PregnancyBelly",
-        "FallbackName": [],
+    "BellyMid": {
+        "SliderName": "BigBelly",
         "Min": 0.0,
         "Max": 1.0
+    },
+    "BellyUnder": {
+        "SliderName": "BellyUnder_v2",
+        "Min": 0.0,
+        "Max": 2.0
+    },
+    "BellyPregnancy": {
+        "SliderName": "PregnancyBelly",
+        "Min": 0.0,
+        "Max": 0.6
     },
     "Breasts": {
         "SliderName": "Breasts",
-        "FallbackName": [],
         "Min": 0.0,
-        "Max": 1.0
+        "Max": 2.0
     },
     "Butt": {
         "SliderName": "Butt",
-        "FallbackName": [],
         "Min": 0.0,
         "Max": 1.0
     }

@@ -1,5 +1,6 @@
 #include "Menu.h"
 
+#include "inflationManager.h"
 #include "morph.h"
 #include "settings.h"
 
@@ -139,22 +140,10 @@ void Combo(std::uint32_t hash, T* current_item, std::function<void()> onChange =
 
 void Menu::Settings()
 {
-  static bool a = true;
-  ImGui::Checkbox("UnknownValue"_h, &a, []() {
-    Morph::visit();
-  });
-
-  static std::unordered_map<std::uint32_t, float> savedMorphs;
-  for (auto& [hash, data] : Morph::Get()) {
-    ImGuiMCP::Text(std::format("Slider Name: {}", data.morphName).data());
-    if (savedMorphs.find(hash) == savedMorphs.end()) {
-      savedMorphs[hash] = Morph::GetMorphByName(RE::PlayerCharacter::GetSingleton(), data.morphName);
-    }
-    float& value = savedMorphs[hash];
-    value        = Morph::GetMorphByName(RE::PlayerCharacter::GetSingleton(), data.morphName);
-    ImGui::DragFloat(hash, &value, 0.1f, data.min, data.max, "%.2f", [&]() {
-      Morph::SetMorphByName(RE::PlayerCharacter::GetSingleton(), data.morphName, value);
-      Morph::ApplyMorphs(RE::PlayerCharacter::GetSingleton());
+  for (Morph::MorphType type : magic_enum::enum_values<Morph::MorphType>()) {
+    auto value = InflationManager::GetInflation(RE::PlayerCharacter::GetSingleton(), type);
+    ImGui::DragFloat(Morph::GetHash(type), &value, 0.01f, Morph::GetMinValue(type), Morph::GetMaxValue(type), "%.2f", [&]() {
+      InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
     });
     ImGuiMCP::Separator();
   }

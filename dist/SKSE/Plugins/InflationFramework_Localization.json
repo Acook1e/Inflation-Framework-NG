@@ -20,19 +20,27 @@
         "desc": ""
     },
     "Belly": {
-        "label": "腹部",
+        "label": "整体腹部",
         "desc": "控制角色腹部的膨胀程度。"
     },
-    "Pregnancy": {
+    "BellyMid": {
+        "label": "肚子",
+        "desc": "控制角色中腹部的膨胀程度。"
+    },
+    "BellyUnder": {
+        "label": "下腹",
+        "desc": "控制角色下腹部的膨胀程度。"
+    },
+    "BellyPregnancy": {
         "label": "孕肚",
         "desc": "控制角色孕肚的膨胀程度。"
     },
     "Breasts": {
-        "label": "胸部",
+        "label": "整体胸部",
         "desc": "控制角色胸部的膨胀程度。"
     },
     "Butt": {
-        "label": "臀部",
+        "label": "整体臀部",
         "desc": "控制角色臀部的膨胀程度。"
     }
 }

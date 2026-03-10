@@ -8,11 +8,34 @@
 namespace Morph
 {
 static SKEE::IBodyMorphInterface* bodyMorphInterface = nullptr;
+static std::unordered_map<MorphType, std::uint32_t> hashMap;
 static std::unordered_map<std::uint32_t, MorphData> morphDataMap;
 
-std::unordered_map<std::uint32_t, MorphData>& Get()
+std::uint32_t GetHash(MorphType type)
 {
-  return morphDataMap;
+  if (hashMap.empty())
+    for (const auto& value : magic_enum::enum_values<MorphType>())
+      hashMap[value] = hash(magic_enum::enum_name<MorphType>(value));
+
+  return hashMap[type];
+}
+
+float GetMinValue(MorphType type)
+{
+  const auto it = morphDataMap.find(GetHash(type));
+  if (it != morphDataMap.end()) {
+    return it->second.min;
+  }
+  return 0.0f;
+}
+
+float GetMaxValue(MorphType type)
+{
+  const auto it = morphDataMap.find(GetHash(type));
+  if (it != morphDataMap.end()) {
+    return it->second.max;
+  }
+  return 1.0f;
 }
 
 float GetMorphByName(RE::Actor* actor, std::string_view morphName)
@@ -25,19 +48,7 @@ float GetMorphByName(RE::Actor* actor, std::string_view morphName)
 float GetMorphByType(RE::Actor* actor, MorphType morphType)
 {
   if (bodyMorphInterface && actor->Is3DLoaded()) {
-    auto name     = magic_enum::enum_name<MorphType>(morphType);
-    const auto it = morphDataMap.find(hash(name));
-    if (it != morphDataMap.end()) {
-      return bodyMorphInterface->GetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data());
-    }
-  }
-  return 0.0f;
-}
-
-float GetMorphByMap(RE::Actor* actor, std::string_view mapName)
-{
-  if (bodyMorphInterface && actor->Is3DLoaded()) {
-    const auto it = morphDataMap.find(hash(mapName.data(), mapName.size()));
+    const auto it = morphDataMap.find(GetHash(morphType));
     if (it != morphDataMap.end()) {
       return bodyMorphInterface->GetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data());
     }
@@ -54,18 +65,7 @@ void SetMorphByName(RE::Actor* actor, std::string_view morphName, float value)
 void SetMorphByType(RE::Actor* actor, MorphType morphType, float value)
 {
   if (bodyMorphInterface && actor->Is3DLoaded()) {
-    auto name     = magic_enum::enum_name<MorphType>(morphType);
-    const auto it = morphDataMap.find(hash(name));
-    if (it != morphDataMap.end()) {
-      bodyMorphInterface->SetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data(), value);
-    }
-  }
-}
-
-void SetMorphByMap(RE::Actor* actor, std::string_view mapName, float value)
-{
-  if (bodyMorphInterface && actor->Is3DLoaded()) {
-    const auto it = morphDataMap.find(hash(mapName.data(), mapName.size()));
+    const auto it = morphDataMap.find(GetHash(morphType));
     if (it != morphDataMap.end()) {
       bodyMorphInterface->SetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data(), value);
     }
@@ -84,20 +84,6 @@ void ApplyMorphs(RE::Actor* actor)
 {
   if (bodyMorphInterface && actor->Is3DLoaded())
     bodyMorphInterface->ApplyBodyMorphs(actor);
-}
-
-class VisitorImpl : public SKEE::IBodyMorphInterface::MorphValueVisitor
-{
-  void Visit(RE::TESObjectREFR* actor, const char* morphName, const char* morphKey, float value) override
-  {
-    logger::info("Morph {} {} Value {}", morphName, morphKey, value);
-  }
-};
-
-void visit()
-{
-  VisitorImpl visitor;
-  bodyMorphInterface->VisitMorphValues(RE::PlayerCharacter::GetSingleton(), visitor);
 }
 
 void Initialize()

@@ -4,10 +4,12 @@ namespace Morph
 {
 enum class MorphType : std::uint8_t
 {
-  Belly,
-  Pregnancy,
-  Breasts,
-  Butt,
+  Belly,           // 腹部整体
+  BellyMid,        // 腹部中间
+  BellyUnder,      // 下腹部
+  BellyPregnancy,  // 怀孕腹部
+  Breasts,         // 胸部整体
+  Butt,            // 臀部整体
 };
 
 struct MorphData
@@ -17,16 +19,16 @@ struct MorphData
   float max;
 };
 
-std::unordered_map<std::uint32_t, MorphData>& Get();
-void visit();
+std::uint32_t GetHash(MorphType type);
+
+float GetMinValue(MorphType type);
+float GetMaxValue(MorphType type);
 
 float GetMorphByName(RE::Actor* actor, std::string_view morphName);
 float GetMorphByType(RE::Actor* actor, MorphType morphType);
-float GetMorphByMap(RE::Actor* actor, std::string_view mapName);
 
 void SetMorphByName(RE::Actor* actor, std::string_view morphName, float value);
 void SetMorphByType(RE::Actor* actor, MorphType morphType, float value);
-void SetMorphByMap(RE::Actor* actor, std::string_view mapName, float value);
 
 bool HasMorph(RE::Actor* actor, std::string_view morphName);
 
