@@ -1,8 +1,14 @@
+#include "menu.h"
+#include "morph.h"
+#include "settings.h"
 
+inline void onPostLoad()
+{
+  Settings::JsonToSettings();
+  Morph::Initialize();
+}
 
-void onPostLoad() {}
-
-void onDataLoaded() {}
+inline void onDataLoaded() {}
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
