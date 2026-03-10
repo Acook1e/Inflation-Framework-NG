@@ -2,22 +2,35 @@
 
 namespace Morph
 {
-enum class MorphType
+enum class MorphType : std::uint8_t
 {
   Belly,
+  Pregnancy,
   Breasts,
   Butt,
 };
+
 struct MorphData
 {
   std::string morphName;
-  std::string morphKey;
-  MorphType morphType;
+  float min;
+  float max;
 };
 
-void SetMorphByName(RE::Actor* actor, const char* morphName, const char* morphKey, float value);
-void SetMorphByHash(RE::Actor* actor, std::uint32_t morphHash, float value);
-void SetMorphByMap(RE::Actor* actor, const char* mapName, float value);
+std::unordered_map<std::uint32_t, MorphData>& Get();
+void visit();
+
+float GetMorphByName(RE::Actor* actor, std::string_view morphName);
+float GetMorphByType(RE::Actor* actor, MorphType morphType);
+float GetMorphByMap(RE::Actor* actor, std::string_view mapName);
+
+void SetMorphByName(RE::Actor* actor, std::string_view morphName, float value);
+void SetMorphByType(RE::Actor* actor, MorphType morphType, float value);
+void SetMorphByMap(RE::Actor* actor, std::string_view mapName, float value);
+
+bool HasMorph(RE::Actor* actor, std::string_view morphName);
+
+void ApplyMorphs(RE::Actor* actor);
 
 void Initialize();
 }  // namespace Morph

@@ -5,10 +5,19 @@
 inline void onPostLoad()
 {
   Settings::JsonToSettings();
+}
+
+inline void onPostPostLoad()
+{
   Morph::Initialize();
 }
 
-inline void onDataLoaded() {}
+inline void onDataLoaded()
+{
+  Menu::GetSingleton();
+}
+
+inline void onEnterGame() {}
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
@@ -16,14 +25,19 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
   case SKSE::MessagingInterface::kPostLoad:
     onPostLoad();
     break;
+  case SKSE::MessagingInterface::kPostPostLoad:
+    onPostPostLoad();
+    break;
   case SKSE::MessagingInterface::kDataLoaded:
     onDataLoaded();
     break;
   case SKSE::MessagingInterface::kNewGame:
+    onEnterGame();
     break;
   case SKSE::MessagingInterface::kPreLoadGame:
     break;
   case SKSE::MessagingInterface::kPostLoadGame:
+    onEnterGame();
     break;
   }
 }

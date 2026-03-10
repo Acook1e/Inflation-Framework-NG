@@ -6,3 +6,6 @@
 .xmake
 build
 cmake-build*
+
+*.dll
+*.pdb

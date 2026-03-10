@@ -1,0 +1,26 @@
+{
+    "Belly": {
+        "SliderName": "Belly",
+        "FallbackName": [],
+        "Min": 0.0,
+        "Max": 1.0
+    },
+    "Pregnancy": {
+        "SliderName": "PregnancyBelly",
+        "FallbackName": [],
+        "Min": 0.0,
+        "Max": 1.0
+    },
+    "Breasts": {
+        "SliderName": "Breasts",
+        "FallbackName": [],
+        "Min": 0.0,
+        "Max": 1.0
+    },
+    "Butt": {
+        "SliderName": "Butt",
+        "FallbackName": [],
+        "Min": 0.0,
+        "Max": 1.0
+    }
+}

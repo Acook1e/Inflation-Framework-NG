@@ -1,0 +1,38 @@
+{
+    "None": {
+        "label": "无",
+        "desc": ""
+    },
+    "UnknownValue": {
+        "label": "未知值",
+        "desc": ""
+    },
+    "InflationFramework": {
+        "label": "膨胀框架",
+        "desc": ""
+    },
+    "Settings": {
+        "label": "设置",
+        "desc": ""
+    },
+    "MorphType": {
+        "label": "变形类型",
+        "desc": ""
+    },
+    "Belly": {
+        "label": "腹部",
+        "desc": "控制角色腹部的膨胀程度。"
+    },
+    "Pregnancy": {
+        "label": "孕肚",
+        "desc": "控制角色孕肚的膨胀程度。"
+    },
+    "Breasts": {
+        "label": "胸部",
+        "desc": "控制角色胸部的膨胀程度。"
+    },
+    "Butt": {
+        "label": "臀部",
+        "desc": "控制角色臀部的膨胀程度。"
+    }
+}
