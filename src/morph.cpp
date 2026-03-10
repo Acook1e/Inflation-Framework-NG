@@ -20,6 +20,15 @@ std::uint32_t GetHash(MorphType type)
   return hashMap[type];
 }
 
+std::string_view GetMorphName(MorphType type)
+{
+  const auto it = morphDataMap.find(GetHash(type));
+  if (it != morphDataMap.end()) {
+    return it->second.morphName;
+  }
+  return "";
+}
+
 float GetMinValue(MorphType type)
 {
   const auto it = morphDataMap.find(GetHash(type));

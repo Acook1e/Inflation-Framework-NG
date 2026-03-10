@@ -21,6 +21,7 @@ struct MorphData
 
 std::uint32_t GetHash(MorphType type);
 
+std::string_view GetMorphName(MorphType type);
 float GetMinValue(MorphType type);
 float GetMaxValue(MorphType type);
 

@@ -1,3 +1,4 @@
+#include "InflationManager.h"
 #include "menu.h"
 #include "morph.h"
 #include "settings.h"
@@ -5,6 +6,7 @@
 inline void onPostLoad()
 {
   Settings::JsonToSettings();
+  InflationManager::Initialize();
 }
 
 inline void onPostPostLoad()

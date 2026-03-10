@@ -7,14 +7,16 @@ namespace InflationManager
 static std::unordered_map<RE::FormID, std::unordered_map<std::uint32_t, float>> inflationDataMap;
 static std::unordered_map<RE::Actor*, std::unordered_map<std::uint32_t, float>> runtimeInflationDataMap;
 
+static std::mutex mtx;
+
 float GetInflation(RE::Actor* actor, Morph::MorphType type)
 {
   if (!actor)
     return 0.0f;
 
-  RE::FormID formID = actor->GetFormID();
   if (actor->GetActorBase()->IsUnique()) {
-    const auto it = inflationDataMap.find(formID);
+    RE::FormID formID = actor->GetFormID();
+    const auto it     = inflationDataMap.find(formID);
     if (it != inflationDataMap.end()) {
       const auto hashIt = it->second.find(Morph::GetHash(type));
       if (hashIt != it->second.end()) {
@@ -38,17 +40,101 @@ void SetInflation(RE::Actor* actor, Morph::MorphType type, float value)
   if (!actor)
     return;
 
-  RE::FormID formID = actor->GetFormID();
-  if (actor->GetActorBase()->IsUnique())
+  if (actor->GetActorBase()->IsUnique()) {
+    RE::FormID formID                              = actor->GetFormID();
     inflationDataMap[formID][Morph::GetHash(type)] = value;
-  else
+  } else
     runtimeInflationDataMap[actor][Morph::GetHash(type)] = value;
   Morph::SetMorphByType(actor, type, value);
   Morph::ApplyMorphs(actor);
 }
 
-void SaveData() {}
-void LoadData() {}
-void RevertData() {}
+void ModInflation(RE::Actor* actor, Morph::MorphType type, float value)
+{
+  if (!actor)
+    return;
 
-};  // namespace InflationManager
+  RE::FormID formID = actor->GetFormID();
+  if (actor->GetActorBase()->IsUnique()) {
+    const auto it = inflationDataMap.find(formID);
+    if (it != inflationDataMap.end()) {
+      const auto hashIt = it->second.find(Morph::GetHash(type));
+      if (hashIt != it->second.end()) {
+        hashIt->second += value;
+        Morph::SetMorphByType(actor, type, hashIt->second);
+        Morph::ApplyMorphs(actor);
+      }
+    }
+  } else {
+    const auto it = runtimeInflationDataMap.find(actor);
+    if (it != runtimeInflationDataMap.end()) {
+      const auto hashIt = it->second.find(Morph::GetHash(type));
+      if (hashIt != it->second.end()) {
+        hashIt->second += value;
+        Morph::SetMorphByType(actor, type, hashIt->second);
+        Morph::ApplyMorphs(actor);
+      }
+    }
+  }
+}
+
+void SaveData(SKSE::SerializationInterface* serial)
+{
+  std::lock_guard<std::mutex> lock(mtx);
+  serial->WriteRecordData(static_cast<std::size_t>(inflationDataMap.size()));
+  for (const auto& [formID, morphMap] : inflationDataMap) {
+    serial->WriteRecordData(formID);
+    serial->WriteRecordData(static_cast<std::size_t>(morphMap.size()));
+    for (const auto& [hash, value] : morphMap) {
+      serial->WriteRecordData(hash);
+      serial->WriteRecordData(value);
+    }
+  }
+}
+void LoadData(SKSE::SerializationInterface* serial)
+{
+  std::lock_guard<std::mutex> lock(mtx);
+  inflationDataMap.clear();
+  runtimeInflationDataMap.clear();
+
+  std::size_t actorCount = 0;
+  serial->ReadRecordData(actorCount);
+  for (std::size_t i = 0; i < actorCount; ++i) {
+    RE::FormID formID;
+    serial->ReadRecordData(formID);
+
+    std::size_t morphCount = 0;
+    serial->ReadRecordData(morphCount);
+
+    std::unordered_map<std::uint32_t, float> morphMap;
+    for (std::size_t j = 0; j < morphCount; ++j) {
+      std::uint32_t hash;
+      float value;
+      serial->ReadRecordData(hash);
+      serial->ReadRecordData(value);
+      morphMap[hash] = value;
+    }
+    inflationDataMap[formID] = std::move(morphMap);
+  }
+}
+void RevertData(SKSE::SerializationInterface* serial)
+{
+  std::lock_guard<std::mutex> lock(mtx);
+  inflationDataMap.clear();
+  runtimeInflationDataMap.clear();
+}
+
+void Initialize()
+{
+  auto serial = SKSE::GetSerializationInterface();
+  if (!serial) {
+    logger::critical("[Inflation Framework] Failed to get SerializationInterface");
+    return;
+  }
+  serial->SetUniqueID(MOD);
+  serial->SetSaveCallback(SaveData);
+  serial->SetLoadCallback(LoadData);
+  serial->SetRevertCallback(RevertData);
+  logger::info("[Inflation Framework] InflationManager initialized");
+}
+}  // namespace InflationManager
