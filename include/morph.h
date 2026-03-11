@@ -1,15 +1,22 @@
 #pragma once
 
+#include <string_view>
+#include <unordered_map>
+
 namespace Morph
 {
+
+// ─── MorphType ───
+// 枚举名必须与 InflationFramework_Morphs.json 的 key 完全一致
+// magic_enum 依赖枚举名做 JSON key → enum 映射
 enum class MorphType : std::uint8_t
 {
-  Belly,           // 腹部整体
-  BellyMid,        // 腹部中间
-  BellyUnder,      // 下腹部
-  BellyPregnancy,  // 怀孕腹部
-  Breasts,         // 胸部整体
-  Butt,            // 臀部整体
+  Belly          = 0,
+  BellyMid       = 1,
+  BellyUnder     = 2,
+  BellyPregnancy = 3,
+  Breasts        = 4,
+  Butt           = 5,
 };
 
 struct MorphData
@@ -19,8 +26,9 @@ struct MorphData
   float max;
 };
 
-std::uint32_t GetHash(MorphType type);
+void Initialize();
 
+std::uint32_t GetHash(MorphType type);
 std::string_view GetMorphName(MorphType type);
 float GetMinValue(MorphType type);
 float GetMaxValue(MorphType type);
@@ -35,5 +43,4 @@ bool HasMorph(RE::Actor* actor, std::string_view morphName);
 
 void ApplyMorphs(RE::Actor* actor);
 
-void Initialize();
 }  // namespace Morph
