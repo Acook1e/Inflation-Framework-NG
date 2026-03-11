@@ -49,8 +49,6 @@ float GetMorphByType(RE::Actor* actor, MorphType morphType);
 void SetMorphByName(RE::Actor* actor, std::string_view morphName, float value);
 void SetMorphByType(RE::Actor* actor, MorphType morphType, float value);
 
-bool HasMorph(RE::Actor* actor, std::string_view morphName);
-
 void ApplyMorphs(RE::Actor* actor);
 
 }  // namespace Morph

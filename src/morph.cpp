@@ -101,14 +101,6 @@ void SetMorphByType(RE::Actor* actor, MorphType morphType, float value)
   }
 }
 
-bool HasMorph(RE::Actor* actor, std::string_view morphName)
-{
-  if (bodyMorphInterface && actor->Is3DLoaded()) {
-    return bodyMorphInterface->HasBodyMorph(actor, morphName.data(), PLUGIN_NAME.data());
-  }
-  return false;
-}
-
 void ApplyMorphs(RE::Actor* actor)
 {
   if (bodyMorphInterface && actor->Is3DLoaded())

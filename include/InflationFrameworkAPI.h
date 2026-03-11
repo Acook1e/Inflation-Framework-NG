@@ -63,7 +63,17 @@ public:
   // 增量修改 actor 某 morph (立即应用 morph)
   virtual void ModInflation(RE::Actor* actor, MorphType type, float value) = 0;
 
-  // 按 morph 名字操作 (不走 MorphType 枚举, 直接操作 SKEE slider)
+  // 获取某 morph 的 min/max
+  virtual float GetMorphMaxValue(MorphType type) const = 0;
+  virtual float GetMorphMinValue(MorphType type) const = 0;
+
+  // 设置某 morph 的 min/max 理论上不应该提供这个接口
+  // 推荐通过 RegisterInflation 定义好 morph 的 min/max 后就不要修改了
+  virtual void SetMorphMaxValue(MorphType type, float max) = 0;
+  virtual void SetMorphMinValue(MorphType type, float min) = 0;
+
+  // 按 morph 名字操作 不受上下限控制
+  // InflationFramework 不会记录这类操作到存档
   virtual float GetMorphByName(RE::Actor* actor, const char* morphName) const       = 0;
   virtual void SetMorphByName(RE::Actor* actor, const char* morphName, float value) = 0;
 

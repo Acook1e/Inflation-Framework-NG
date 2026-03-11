@@ -86,6 +86,14 @@ void AddSectionItem(std::uint32_t hash, SKSEMenuFramework::Model::RenderFunction
   else
     SKSEMenuFramework::AddSectionItem(GetStringMap("UnknownValue"_h).label.data(), func);
 }
+void Text(std::uint32_t hash, auto&&... args)
+{
+  const StringMap& map = GetStringMap(hash);
+  if (!map.label.empty())
+    ImGuiMCP::Text(std::vformat(map.label, std::make_format_args(args...)).data());
+  else
+    ImGuiMCP::Text(GetStringMap("UnknownValue"_h).label.data());
+}
 void Checkbox(std::uint32_t hash, bool* v, std::function<void()> onChange = nullptr)
 {
   const StringMap& map = GetStringMap(hash);
@@ -149,10 +157,18 @@ void Menu::Settings()
 
 void Menu::Debug()
 {
+  auto cross        = RE::CrosshairPickData::GetSingleton();
+  RE::Actor* target = nullptr;
+  if (cross->targetActor && cross->targetActor.get())
+    target = cross->targetActor.get().get()->As<RE::Actor>();
+  if (!target)
+    target = RE::PlayerCharacter::GetSingleton();
+
+  ImGui::Text("Target"_h, target->GetDisplayFullName());
   for (const auto& [type, data] : Morph::GetMorphDataMap()) {
-    auto value = InflationManager::GetInflation(RE::PlayerCharacter::GetSingleton(), type);
+    auto value = InflationManager::GetInflation(target, type);
     ImGui::DragFloat(data.hash, &value, 0.01f, data.min, data.max, "%.2f", [&]() {
-      InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
+      InflationManager::SetInflation(target, type, value);
     });
   }
 }

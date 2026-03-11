@@ -58,5 +58,9 @@
     "Debug": {
         "label": "调试",
         "desc": ""
+    },
+    "Target": {
+        "label": "当前目标: {}",
+        "desc": ""
     }
 }

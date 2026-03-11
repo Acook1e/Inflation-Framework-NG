@@ -5,7 +5,6 @@
 #include "menu.h"
 #include "morph.h"
 
-
 namespace InflationFrameworkAPI
 {
 
@@ -45,6 +44,24 @@ public:
   void ModInflation(RE::Actor* actor, MorphType type, float value) override
   {
     InflationManager::ModInflation(actor, static_cast<Morph::MorphType>(type), value);
+  }
+
+  float GetMorphMaxValue(MorphType type) const override { return Morph::GetMaxValue(static_cast<Morph::MorphType>(type)); }
+
+  float GetMorphMinValue(MorphType type) const override { return Morph::GetMinValue(static_cast<Morph::MorphType>(type)); }
+
+  void SetMorphMaxValue(MorphType type, float max) override
+  {
+    auto& data = Morph::GetMorphData(static_cast<Morph::MorphType>(type));
+    if (!data.morphName.empty())
+      data.max = max;
+  }
+
+  void SetMorphMinValue(MorphType type, float min) override
+  {
+    auto& data = Morph::GetMorphData(static_cast<Morph::MorphType>(type));
+    if (!data.morphName.empty())
+      data.min = min;
   }
 
   float GetMorphByName(RE::Actor* actor, const char* morphName) const override { return Morph::GetMorphByName(actor, morphName); }
