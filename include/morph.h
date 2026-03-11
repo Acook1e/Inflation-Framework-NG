@@ -29,13 +29,18 @@ struct MorphData
 
 void Initialize();
 
-// 对于内部维护 MorphType 或者计算好的自定义 morph，直接获取 hash
-// 返回值为 0 证明找到对应的 Morph 不存在需要注册
-std::uint32_t GetHash(MorphType type);
-// 对于用户自定义的 Morph，使用 morphName 的 hash 作为 key
-std::uint32_t GetHash(std::string_view morphName);
+// 所有 MorphType 的访问接口，用于内部调用
+std::unordered_map<MorphType, std::uint32_t>& GetHashMap();
+MorphData& GetMorphData(std::uint32_t hash);
 
-void RegisterMorph(std::string_view morphName, float min = 0.0f, float max = 1.0f);
+// 对于内部维护 MorphType 或者计算好的自定义 morph，直接获取 hash
+// 返回值为 0 证明没有找到对应的 Morph 需要注册
+std::uint32_t GetHash(MorphType type);
+
+// 对于用户自定义的 Morph，使用 morphName 的 hash 作为 MorphType
+// 返回值为 0 证明 hash 冲突 但概率极低 1e-9 级别，基本可以忽略
+std::uint32_t GetType(std::string_view morphName);
+void RegisterMorph(std::string morphName, float min = 0.0f, float max = 1.0f);
 
 std::string_view GetMorphName(MorphType type);
 float GetMinValue(MorphType type);

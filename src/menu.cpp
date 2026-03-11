@@ -40,9 +40,11 @@ void LoadLocalization()
     const auto& enum_name   = magic_enum::enum_type_name<E>();
     const auto& value_names = magic_enum::enum_names<E>();
     std::vector<StringMap> maps;
-    for (const auto& name : value_names)
-      maps.push_back(stringMaps.at(hash(name)));
-    comboMaps[hash(enum_name)] = maps;
+    for (const auto& name : value_names) {
+      if (auto hashValue = hash(name); stringMaps.find(hashValue) != stringMaps.end())
+        maps.push_back(stringMaps.at(hashValue));
+    }
+    comboMaps[hash(enum_name)] = std::move(maps);
   };
 
   stringMaps.reserve(j.size());
@@ -140,12 +142,18 @@ void Combo(std::uint32_t hash, T* current_item, std::function<void()> onChange =
 
 void Menu::Settings()
 {
-  for (Morph::MorphType type : magic_enum::enum_values<Morph::MorphType>()) {
+  for (const auto& [type, hash] : Morph::GetHashMap()) {
     auto value = InflationManager::GetInflation(RE::PlayerCharacter::GetSingleton(), type);
-    ImGui::DragFloat(Morph::GetHash(type), &value, 0.01f, Morph::GetMinValue(type), Morph::GetMaxValue(type), "%.2f", [&]() {
-      InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
-    });
-    ImGuiMCP::Separator();
+    auto data  = Morph::GetMorphData(hash);
+    if (type < Morph::MorphType::Total) {
+      ImGui::DragFloat(hash, &value, 0.01f, data.min, data.max, "%.2f", [&]() {
+        InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
+      });
+    } else {
+      if (ImGuiMCP::DragFloat(data.morphName.data(), &value, 0.01f, data.min, data.max, "%.2f")) {
+        InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
+      }
+    }
   }
 }
 

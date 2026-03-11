@@ -11,6 +11,20 @@ static SKEE::IBodyMorphInterface* bodyMorphInterface = nullptr;
 static std::unordered_map<MorphType, std::uint32_t> hashMap;
 static std::unordered_map<std::uint32_t, MorphData> morphDataMap;
 
+std::unordered_map<MorphType, std::uint32_t>& GetHashMap()
+{
+  return hashMap;
+}
+
+MorphData& GetMorphData(std::uint32_t hash)
+{
+  if (auto it = morphDataMap.find(hash); it != morphDataMap.end())
+    return it->second;
+
+  static MorphData emptyData{"", 0.0f, 1.0f};
+  return emptyData;
+}
+
 std::uint32_t GetHash(MorphType type)
 {
   if (auto it = hashMap.find(type); it != hashMap.end())
@@ -18,16 +32,42 @@ std::uint32_t GetHash(MorphType type)
   return 0;
 }
 
-std::uint32_t GetHash(std::string_view morphName)
+std::uint32_t GetType(std::string_view morphName)
 {
-  return hash(morphName) + static_cast<uint32_t>(MorphType::Total);
+  auto hashValue = hash(morphName) + static_cast<uint32_t>(MorphType::Total);
+  if (hashValue < static_cast<uint32_t>(MorphType::Total)) {
+    logger::error("[Morph] Hash collision detected for morph '{}'", morphName);
+    return 0;
+  }
+  return hashValue;
 }
 
-void RegisterMorph(std::string_view morphName, float min, float max)
+void RegisterMorph(std::string morphName, float min, float max)
 {
-  std::uint32_t hashValue                    = GetHash(morphName);
-  morphDataMap[hashValue]                    = {std::string(morphName), min, max};
-  hashMap[static_cast<MorphType>(hashValue)] = hashValue;
+  std::uint32_t hashValue                    = GetType(morphName);
+  morphDataMap[hashValue]                    = {morphName, min, max};
+  hashMap[static_cast<MorphType>(hashValue)] = hash(morphName);
+}
+
+void VisitMorphs(std::function<void(MorphType type, std::string_view typeName, float min, float max)> visitor)
+{
+  for (const auto& [type, hash] : hashMap) {
+    const auto& data = morphDataMap.at(hash);
+    if (type < MorphType::Total) {
+      visitor(type, magic_enum::enum_name(type), data.min, data.max);
+    } else
+      visitor(type, data.morphName, data.min, data.max);
+  }
+}
+
+void VisitCustomMorphs(std::function<void(std::string_view morphName, float min, float max)> visitor)
+{
+  for (const auto& [type, hash] : hashMap) {
+    const auto& data = morphDataMap.at(hash);
+    if (type >= MorphType::Total) {
+      visitor(data.morphName, data.min, data.max);
+    }
+  }
 }
 
 std::string_view GetMorphName(MorphType type)
@@ -139,7 +179,8 @@ void Initialize()
     if (auto typeOpt = magic_enum::enum_cast<MorphType>(key); typeOpt.has_value()) {
       hashMap[typeOpt.value()] = hash(key);
     } else {
-      hashMap[static_cast<MorphType>(GetHash(slider))] = hash(key);
+      if (auto type = GetType(slider); type != 0)
+        hashMap[static_cast<MorphType>(type)] = hash(key);
     }
   }
 }

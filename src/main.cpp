@@ -1,5 +1,5 @@
 #include "InflationFrameworkAPI.h"
-#include "InflationFrameworkAPIImpl.h"
+#include "InflationFrameworkAPI_Impl.h"
 #include "InflationManager.h"
 #include "menu.h"
 #include "morph.h"
@@ -46,6 +46,7 @@ inline void onPostPostLoad()
 inline void onDataLoaded()
 {
   Menu::GetSingleton();
+  InflationManager::RegisterInflation("BreastHeight", 0.0f, 2.0f);
 }
 
 inline void onEnterGame() {}

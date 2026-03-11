@@ -6,7 +6,11 @@ class Menu
 {
 public:
   Menu();
-  ~Menu() { delete event; }
+  ~Menu()
+  {
+    if (event)
+      delete event;
+  }
 
   static Menu& GetSingleton()
   {
@@ -19,5 +23,5 @@ public:
   static void __stdcall EventListener(SKSEMenuFramework::Model::EventType eventType);
 
 private:
-  SKSEMenuFramework::Model::Event* event;
+  SKSEMenuFramework::Model::Event* event = nullptr;
 };
