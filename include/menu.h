@@ -6,17 +6,15 @@ class Menu
 {
 public:
   Menu();
-  ~Menu()
-  {
-    if (event)
-      delete event;
-  }
+  ~Menu();
 
   static Menu& GetSingleton()
   {
     static Menu singleton;
     return singleton;
   }
+
+  static void InsertLocalization(std::string key, std::string label, std::string desc);
 
   static void Settings();
 

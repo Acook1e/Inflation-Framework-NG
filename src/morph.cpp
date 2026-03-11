@@ -8,71 +8,41 @@
 namespace Morph
 {
 static SKEE::IBodyMorphInterface* bodyMorphInterface = nullptr;
-static std::unordered_map<MorphType, std::uint32_t> hashMap;
-static std::unordered_map<std::uint32_t, MorphData> morphDataMap;
+static std::unordered_map<MorphType, MorphData> morphDataMap;
 
-std::unordered_map<MorphType, std::uint32_t>& GetHashMap()
+std::unordered_map<MorphType, MorphData>& GetMorphDataMap()
 {
-  return hashMap;
+  return morphDataMap;
 }
 
-MorphData& GetMorphData(std::uint32_t hash)
+MorphData& GetMorphData(MorphType type)
 {
-  if (auto it = morphDataMap.find(hash); it != morphDataMap.end())
+  if (auto it = morphDataMap.find(type); it != morphDataMap.end())
     return it->second;
 
-  static MorphData emptyData{"", 0.0f, 1.0f};
+  static MorphData emptyData{"", 0, 0.0f, 1.0f};
   return emptyData;
 }
 
-std::uint32_t GetHash(MorphType type)
+MorphType GetType(std::string_view morphName)
 {
-  if (auto it = hashMap.find(type); it != hashMap.end())
-    return it->second;
-  return 0;
-}
-
-std::uint32_t GetType(std::string_view morphName)
-{
-  auto hashValue = hash(morphName) + static_cast<uint32_t>(MorphType::Total);
-  if (hashValue < static_cast<uint32_t>(MorphType::Total)) {
+  MorphType type = static_cast<MorphType>(hash(morphName) + static_cast<uint32_t>(MorphType::Total));
+  if (type < MorphType::Total) {
     logger::error("[Morph] Hash collision detected for morph '{}'", morphName);
-    return 0;
+    return static_cast<MorphType>(0);
   }
-  return hashValue;
+  return type;
 }
 
 void RegisterMorph(std::string morphName, float min, float max)
 {
-  std::uint32_t hashValue                    = GetType(morphName);
-  morphDataMap[hashValue]                    = {morphName, min, max};
-  hashMap[static_cast<MorphType>(hashValue)] = hash(morphName);
-}
-
-void VisitMorphs(std::function<void(MorphType type, std::string_view typeName, float min, float max)> visitor)
-{
-  for (const auto& [type, hash] : hashMap) {
-    const auto& data = morphDataMap.at(hash);
-    if (type < MorphType::Total) {
-      visitor(type, magic_enum::enum_name(type), data.min, data.max);
-    } else
-      visitor(type, data.morphName, data.min, data.max);
-  }
-}
-
-void VisitCustomMorphs(std::function<void(std::string_view morphName, float min, float max)> visitor)
-{
-  for (const auto& [type, hash] : hashMap) {
-    const auto& data = morphDataMap.at(hash);
-    if (type >= MorphType::Total) {
-      visitor(data.morphName, data.min, data.max);
-    }
-  }
+  MorphType type     = GetType(morphName);
+  morphDataMap[type] = MorphData{morphName, hash(morphName), min, max};
 }
 
 std::string_view GetMorphName(MorphType type)
 {
-  const auto it = morphDataMap.find(GetHash(type));
+  const auto it = morphDataMap.find(type);
   if (it != morphDataMap.end()) {
     return it->second.morphName;
   }
@@ -81,7 +51,7 @@ std::string_view GetMorphName(MorphType type)
 
 float GetMinValue(MorphType type)
 {
-  const auto it = morphDataMap.find(GetHash(type));
+  const auto it = morphDataMap.find(type);
   if (it != morphDataMap.end()) {
     return it->second.min;
   }
@@ -90,7 +60,7 @@ float GetMinValue(MorphType type)
 
 float GetMaxValue(MorphType type)
 {
-  const auto it = morphDataMap.find(GetHash(type));
+  const auto it = morphDataMap.find(type);
   if (it != morphDataMap.end()) {
     return it->second.max;
   }
@@ -107,7 +77,7 @@ float GetMorphByName(RE::Actor* actor, std::string_view morphName)
 float GetMorphByType(RE::Actor* actor, MorphType morphType)
 {
   if (bodyMorphInterface && actor->Is3DLoaded()) {
-    const auto it = morphDataMap.find(GetHash(morphType));
+    const auto it = morphDataMap.find(morphType);
     if (it != morphDataMap.end()) {
       return bodyMorphInterface->GetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data());
     }
@@ -124,7 +94,7 @@ void SetMorphByName(RE::Actor* actor, std::string_view morphName, float value)
 void SetMorphByType(RE::Actor* actor, MorphType morphType, float value)
 {
   if (bodyMorphInterface && actor->Is3DLoaded()) {
-    const auto it = morphDataMap.find(GetHash(morphType));
+    const auto it = morphDataMap.find(morphType);
     if (it != morphDataMap.end()) {
       bodyMorphInterface->SetMorph(actor, it->second.morphName.data(), PLUGIN_NAME.data(), value);
     }
@@ -173,14 +143,13 @@ void Initialize()
   for (const auto& [key, value] : j.items()) {
     auto slider = value.value("SliderName", "");
     logger::info("[Inflation Framework] Morph::Initialize : Loaded morph mapping: {} -> {}", key, slider);
-    auto min = value.value("Min", 0.0f);
-    auto max = value.value("Max", 1.0f);
-    morphDataMap.emplace(hash(key), MorphData{slider, min, max});
-    if (auto typeOpt = magic_enum::enum_cast<MorphType>(key); typeOpt.has_value()) {
-      hashMap[typeOpt.value()] = hash(key);
+    auto min  = value.value("Min", 0.0f);
+    auto max  = value.value("Max", 1.0f);
+    auto type = magic_enum::enum_cast<MorphType>(key);
+    if (type.has_value()) {
+      morphDataMap.emplace(type.value(), MorphData{slider, hash(key), min, max});
     } else {
-      if (auto type = GetType(slider); type != 0)
-        hashMap[static_cast<MorphType>(type)] = hash(key);
+      morphDataMap.emplace(GetType(slider), MorphData{slider, hash(slider), min, max});
     }
   }
 }

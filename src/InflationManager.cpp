@@ -4,8 +4,8 @@
 
 namespace InflationManager
 {
-static std::unordered_map<RE::FormID, std::unordered_map<std::uint32_t, float>> inflationDataMap;
-static std::unordered_map<RE::Actor*, std::unordered_map<std::uint32_t, float>> runtimeInflationDataMap;
+static std::unordered_map<RE::FormID, std::unordered_map<Morph::MorphType, float>> inflationDataMap;
+static std::unordered_map<RE::Actor*, std::unordered_map<Morph::MorphType, float>> runtimeInflationDataMap;
 
 static std::mutex mtx;
 
@@ -14,13 +14,13 @@ constexpr std::uint32_t InflationData        = 'INFD';
 
 std::uint32_t RegisterInflation(std::string morphName, float min, float max)
 {
-  auto hashValue = Morph::GetType(morphName);
-  if (hashValue == 0)
+  auto type = Morph::GetType(morphName);
+  if (static_cast<std::uint32_t>(type) == 0)
     return 0;
 
-  if (Morph::GetHash(static_cast<Morph::MorphType>(hashValue)) == 0) {
+  if (Morph::GetMorphData(type).morphName.empty()) {
     Morph::RegisterMorph(morphName, min, max);
-    return hashValue;
+    return static_cast<std::uint32_t>(type);
   }
   logger::warn("[InflationManager] Inflation '{}' already registered.", morphName);
   return 0;
@@ -33,25 +33,19 @@ float GetInflation(RE::Actor* actor, Morph::MorphType type)
 
   if (actor->GetActorBase()->IsUnique()) {
     RE::FormID formID = actor->GetFormID();
-    const auto it     = inflationDataMap.find(formID);
-    if (it != inflationDataMap.end()) {
-      const auto hashIt = it->second.find(Morph::GetHash(type));
-      if (hashIt != it->second.end()) {
-        return hashIt->second;
-      }
-    }
-    auto morphValue                                = Morph::GetMorphByType(actor, type);
-    inflationDataMap[formID][Morph::GetHash(type)] = morphValue;
+    if (auto it = inflationDataMap.find(formID); it != inflationDataMap.end())
+      if (auto typeIt = it->second.find(type); typeIt != it->second.end())
+        return typeIt->second;
+
+    auto morphValue                = Morph::GetMorphByType(actor, type);
+    inflationDataMap[formID][type] = morphValue;
   } else {
-    const auto it = runtimeInflationDataMap.find(actor);
-    if (it != runtimeInflationDataMap.end()) {
-      const auto hashIt = it->second.find(Morph::GetHash(type));
-      if (hashIt != it->second.end()) {
-        return hashIt->second;
-      }
-    }
-    auto morphValue                                      = Morph::GetMorphByType(actor, type);
-    runtimeInflationDataMap[actor][Morph::GetHash(type)] = morphValue;
+    if (auto it = runtimeInflationDataMap.find(actor); it != runtimeInflationDataMap.end())
+      if (auto typeIt = it->second.find(type); typeIt != it->second.end())
+        return typeIt->second;
+
+    auto morphValue                      = Morph::GetMorphByType(actor, type);
+    runtimeInflationDataMap[actor][type] = morphValue;
   }
   return 0.0f;
 }
@@ -62,10 +56,10 @@ void SetInflation(RE::Actor* actor, Morph::MorphType type, float value)
     return;
 
   if (actor->GetActorBase()->IsUnique()) {
-    RE::FormID formID                              = actor->GetFormID();
-    inflationDataMap[formID][Morph::GetHash(type)] = value;
+    RE::FormID formID              = actor->GetFormID();
+    inflationDataMap[formID][type] = value;
   } else
-    runtimeInflationDataMap[actor][Morph::GetHash(type)] = value;
+    runtimeInflationDataMap[actor][type] = value;
   Morph::SetMorphByType(actor, type, value);
   Morph::ApplyMorphs(actor);
 }
@@ -77,22 +71,18 @@ void ModInflation(RE::Actor* actor, Morph::MorphType type, float value)
 
   RE::FormID formID = actor->GetFormID();
   if (actor->GetActorBase()->IsUnique()) {
-    const auto it = inflationDataMap.find(formID);
-    if (it != inflationDataMap.end()) {
-      const auto hashIt = it->second.find(Morph::GetHash(type));
-      if (hashIt != it->second.end()) {
-        hashIt->second += value;
-        Morph::SetMorphByType(actor, type, hashIt->second);
+    if (auto it = inflationDataMap.find(formID); it != inflationDataMap.end()) {
+      if (auto typeIt = it->second.find(type); typeIt != it->second.end()) {
+        typeIt->second += value;
+        Morph::SetMorphByType(actor, type, typeIt->second);
         Morph::ApplyMorphs(actor);
       }
     }
   } else {
-    const auto it = runtimeInflationDataMap.find(actor);
-    if (it != runtimeInflationDataMap.end()) {
-      const auto hashIt = it->second.find(Morph::GetHash(type));
-      if (hashIt != it->second.end()) {
-        hashIt->second += value;
-        Morph::SetMorphByType(actor, type, hashIt->second);
+    if (auto it = runtimeInflationDataMap.find(actor); it != runtimeInflationDataMap.end()) {
+      if (auto typeIt = it->second.find(type); typeIt != it->second.end()) {
+        typeIt->second += value;
+        Morph::SetMorphByType(actor, type, typeIt->second);
         Morph::ApplyMorphs(actor);
       }
     }
@@ -118,8 +108,8 @@ void SaveData(SKSE::SerializationInterface* serial)
     for (const auto& [formID, morphMap] : inflationDataMap) {
       serial->WriteRecordData(formID);
       serial->WriteRecordData(static_cast<std::size_t>(morphMap.size()));
-      for (const auto& [hash, value] : morphMap) {
-        serial->WriteRecordData(hash);
+      for (const auto& [type, value] : morphMap) {
+        serial->WriteRecordData(type);
         serial->WriteRecordData(value);
       }
     }
@@ -150,13 +140,16 @@ void LoadData(SKSE::SerializationInterface* serial)
         std::size_t morphCount = 0;
         serial->ReadRecordData(morphCount);
 
-        std::unordered_map<std::uint32_t, float> morphMap;
+        RE::Actor* actor = RE::Actor::LookupByID<RE::Actor>(formID);
+        std::unordered_map<Morph::MorphType, float> morphMap;
         for (std::size_t j = 0; j < morphCount; ++j) {
-          std::uint32_t hash;
+          Morph::MorphType type;
           float value;
-          serial->ReadRecordData(hash);
+          serial->ReadRecordData(type);
           serial->ReadRecordData(value);
-          morphMap[hash] = value;
+          morphMap[type] = value;
+          if (actor)
+            SetInflation(actor, type, value);
         }
         inflationDataMap[formID] = std::move(morphMap);
       }

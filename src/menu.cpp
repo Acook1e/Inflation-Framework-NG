@@ -142,18 +142,11 @@ void Combo(std::uint32_t hash, T* current_item, std::function<void()> onChange =
 
 void Menu::Settings()
 {
-  for (const auto& [type, hash] : Morph::GetHashMap()) {
+  for (const auto& [type, data] : Morph::GetMorphDataMap()) {
     auto value = InflationManager::GetInflation(RE::PlayerCharacter::GetSingleton(), type);
-    auto data  = Morph::GetMorphData(hash);
-    if (type < Morph::MorphType::Total) {
-      ImGui::DragFloat(hash, &value, 0.01f, data.min, data.max, "%.2f", [&]() {
-        InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
-      });
-    } else {
-      if (ImGuiMCP::DragFloat(data.morphName.data(), &value, 0.01f, data.min, data.max, "%.2f")) {
-        InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
-      }
-    }
+    ImGui::DragFloat(data.hash, &value, 0.01f, data.min, data.max, "%.2f", [&]() {
+      InflationManager::SetInflation(RE::PlayerCharacter::GetSingleton(), type, value);
+    });
   }
 }
 
@@ -166,6 +159,11 @@ void __stdcall Menu::EventListener(SKSEMenuFramework::Model::EventType eventType
     Settings::SettingsToJson();
     break;
   }
+}
+
+void Menu::InsertLocalization(std::string key, std::string label, std::string desc)
+{
+  Localization::stringMaps[hash(key)] = {std::move(label), std::move(desc)};
 }
 
 Menu::Menu()
@@ -183,4 +181,10 @@ Menu::Menu()
   event = new SKSEMenuFramework::Model::Event(EventListener, static_cast<float>("InflationFramework"_h));
 
   logger::info("[InflationFramework] Menu: SKSEMenuFramework v{} loaded.", SKSEMenuFramework::GetMenuFrameworkVersion());
+}
+
+Menu::~Menu()
+{
+  if (event)
+    delete event;
 }
