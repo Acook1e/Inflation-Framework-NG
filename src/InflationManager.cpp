@@ -9,6 +9,17 @@ static std::unordered_map<RE::Actor*, std::unordered_map<std::uint32_t, float>> 
 
 static std::mutex mtx;
 
+std::uint32_t RegisterInflation(std::string_view morphName, float min, float max)
+{
+  auto hashValue = Morph::GetHash(morphName);
+  if (Morph::GetHash(static_cast<Morph::MorphType>(hashValue)) == 0) {
+    Morph::RegisterMorph(morphName, min, max);
+    return hashValue;
+  }
+  logger::warn("[InflationManager] Inflation '{}' already registered.", morphName);
+  return 0;
+}
+
 float GetInflation(RE::Actor* actor, Morph::MorphType type)
 {
   if (!actor)
@@ -22,6 +33,8 @@ float GetInflation(RE::Actor* actor, Morph::MorphType type)
       if (hashIt != it->second.end()) {
         return hashIt->second;
       }
+      auto morphValue                                = Morph::GetMorphByType(actor, type);
+      inflationDataMap[formID][Morph::GetHash(type)] = morphValue;
     }
   } else {
     const auto it = runtimeInflationDataMap.find(actor);
@@ -30,6 +43,8 @@ float GetInflation(RE::Actor* actor, Morph::MorphType type)
       if (hashIt != it->second.end()) {
         return hashIt->second;
       }
+      auto morphValue                                      = Morph::GetMorphByType(actor, type);
+      runtimeInflationDataMap[actor][Morph::GetHash(type)] = morphValue;
     }
   }
   return 0.0f;

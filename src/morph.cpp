@@ -13,11 +13,21 @@ static std::unordered_map<std::uint32_t, MorphData> morphDataMap;
 
 std::uint32_t GetHash(MorphType type)
 {
-  if (hashMap.empty())
-    for (const auto& value : magic_enum::enum_values<MorphType>())
-      hashMap[value] = hash(magic_enum::enum_name<MorphType>(value));
+  if (auto it = hashMap.find(type); it != hashMap.end())
+    return it->second;
+  return 0;
+}
 
-  return hashMap[type];
+std::uint32_t GetHash(std::string_view morphName)
+{
+  return hash(morphName) + static_cast<uint32_t>(MorphType::Total);
+}
+
+void RegisterMorph(std::string_view morphName, float min, float max)
+{
+  std::uint32_t hashValue                    = GetHash(morphName);
+  morphDataMap[hashValue]                    = {std::string(morphName), min, max};
+  hashMap[static_cast<MorphType>(hashValue)] = hashValue;
 }
 
 std::string_view GetMorphName(MorphType type)
@@ -126,6 +136,11 @@ void Initialize()
     auto min = value.value("Min", 0.0f);
     auto max = value.value("Max", 1.0f);
     morphDataMap.emplace(hash(key), MorphData{slider, min, max});
+    if (auto typeOpt = magic_enum::enum_cast<MorphType>(key); typeOpt.has_value()) {
+      hashMap[typeOpt.value()] = hash(key);
+    } else {
+      hashMap[static_cast<MorphType>(GetHash(slider))] = hash(key);
+    }
   }
 }
 }  // namespace Morph

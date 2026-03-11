@@ -9,7 +9,7 @@ namespace Morph
 // ─── MorphType ───
 // 枚举名必须与 InflationFramework_Morphs.json 的 key 完全一致
 // magic_enum 依赖枚举名做 JSON key → enum 映射
-enum class MorphType : std::uint8_t
+enum class MorphType : std::uint32_t
 {
   Belly          = 0,
   BellyMid       = 1,
@@ -17,6 +17,7 @@ enum class MorphType : std::uint8_t
   BellyPregnancy = 3,
   Breasts        = 4,
   Butt           = 5,
+  Total
 };
 
 struct MorphData
@@ -28,7 +29,14 @@ struct MorphData
 
 void Initialize();
 
+// 对于内部维护 MorphType 或者计算好的自定义 morph，直接获取 hash
+// 返回值为 0 证明找到对应的 Morph 不存在需要注册
 std::uint32_t GetHash(MorphType type);
+// 对于用户自定义的 Morph，使用 morphName 的 hash 作为 key
+std::uint32_t GetHash(std::string_view morphName);
+
+void RegisterMorph(std::string_view morphName, float min = 0.0f, float max = 1.0f);
+
 std::string_view GetMorphName(MorphType type);
 float GetMinValue(MorphType type);
 float GetMaxValue(MorphType type);
