@@ -2,7 +2,9 @@
 
 #include "InflationFrameworkAPI.h"
 #include "InflationManager.h"
+#include "menu.h"
 #include "morph.h"
+
 
 namespace InflationFrameworkAPI
 {
@@ -20,6 +22,15 @@ public:
   }
 
   std::uint32_t GetVersion() const override { return kAPIVersion; }
+
+  MorphType GetMorphType(const char* morphName) const override { return static_cast<MorphType>(Morph::GetType(morphName)); }
+
+  std::uint32_t RegisterInflation(const char* morphName, float min, float max) override
+  {
+    return InflationManager::RegisterInflation(morphName, min, max);
+  }
+
+  void RegisterLocalization(const char* morphName, const char* label, const char* desc) { Menu::InsertLocalization(morphName, label, desc); }
 
   float GetInflation(RE::Actor* actor, MorphType type) const override
   {

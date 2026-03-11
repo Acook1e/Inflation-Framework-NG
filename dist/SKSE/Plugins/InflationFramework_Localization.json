@@ -11,10 +11,6 @@
         "label": "膨胀框架",
         "desc": ""
     },
-    "Settings": {
-        "label": "设置",
-        "desc": ""
-    },
     "MorphType": {
         "label": "变形类型",
         "desc": ""
@@ -42,5 +38,25 @@
     "Butt": {
         "label": "整体臀部",
         "desc": "控制角色臀部的膨胀程度。"
+    },
+    "Settings": {
+        "label": "设置",
+        "desc": ""
+    },
+    "EnableMod": {
+        "label": "启用模组",
+        "desc": "启用或禁用膨胀框架模组的整体功能。"
+    },
+    "EnablePlayer": {
+        "label": "启用玩家",
+        "desc": "启用或禁用玩家角色的膨胀效果。"
+    },
+    "EnableNPC": {
+        "label": "启用NPC",
+        "desc": "启用或禁用NPC的膨胀效果。"
+    },
+    "Debug": {
+        "label": "调试",
+        "desc": ""
     }
 }

@@ -142,6 +142,13 @@ void Combo(std::uint32_t hash, T* current_item, std::function<void()> onChange =
 
 void Menu::Settings()
 {
+  ImGui::Checkbox("EnableMod"_h, &Settings::enable);
+  ImGui::Checkbox("EnablePlayer"_h, &Settings::enablePlayer);
+  ImGui::Checkbox("EnableNPC"_h, &Settings::enableNPC);
+}
+
+void Menu::Debug()
+{
   for (const auto& [type, data] : Morph::GetMorphDataMap()) {
     auto value = InflationManager::GetInflation(RE::PlayerCharacter::GetSingleton(), type);
     ImGui::DragFloat(data.hash, &value, 0.01f, data.min, data.max, "%.2f", [&]() {
@@ -176,6 +183,7 @@ Menu::Menu()
   ImGui::SetSection("InflationFramework"_h);
 
   ImGui::AddSectionItem("Settings"_h, Settings);
+  ImGui::AddSectionItem("Debug"_h, Debug);
 
   // priority should be a individual value for each mod, here is nexus id of this mod
   event = new SKSEMenuFramework::Model::Event(EventListener, static_cast<float>("InflationFramework"_h));

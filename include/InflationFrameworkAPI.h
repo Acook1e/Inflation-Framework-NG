@@ -9,7 +9,7 @@
 //  用法 (消费端):
 //    #include "InflationFrameworkAPI.h"
 //
-//    // 在 kPostLoad 之后:
+//    // 在 kPostPostLoad 之后:
 //    auto* api = InflationFrameworkAPI::GetAPI();
 //    if (api) {
 //        api->SetInflation(actor, InflationFrameworkAPI::MorphType::Belly, 0.5f);
@@ -26,7 +26,7 @@ namespace InflationFrameworkAPI
 inline constexpr std::uint32_t kAPIVersion = 1;
 
 // Morph 类型 — 必须与 InflationFramework 内部 Morph::MorphType 一致
-enum class MorphType : std::uint8_t
+enum class MorphType : std::uint32_t
 {
   Belly          = 0,
   BellyMid       = 1,
@@ -34,6 +34,7 @@ enum class MorphType : std::uint8_t
   BellyPregnancy = 3,
   Breasts        = 4,
   Butt           = 5,
+  Total
 };
 
 // ─── API 接口 (虚函数表, 跨 DLL 安全) ───
@@ -43,6 +44,15 @@ public:
   virtual ~IInflationFrameworkInterface() = default;
 
   virtual std::uint32_t GetVersion() const = 0;
+
+  // 根据滑条名获取 MorphType, 没有则返回 0 (注意 MorphType::Total 之前的值是保留的)
+  virtual MorphType GetMorphType(const char* morphName) const = 0;
+
+  // 注册自定义 Morph, 供 GetMorphTypeByName 和后续的 Get/SetInflation 使用
+  virtual std::uint32_t RegisterInflation(const char* morphName, float min, float max) = 0;
+
+  // 注册本地化字符串 (morphName 需要与 RegisterInflation 时一致)
+  virtual void RegisterLocalization(const char* morphName, const char* label, const char* desc) = 0;
 
   // 获取 actor 某 morph 当前值
   virtual float GetInflation(RE::Actor* actor, MorphType type) const = 0;

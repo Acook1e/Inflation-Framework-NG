@@ -1,4 +1,5 @@
 #include "InflationManager.h"
+#include "menu.h"
 
 #include "magic_enum/magic_enum.hpp"
 
@@ -20,6 +21,7 @@ std::uint32_t RegisterInflation(std::string morphName, float min, float max)
 
   if (Morph::GetMorphData(type).morphName.empty()) {
     Morph::RegisterMorph(morphName, min, max);
+    Menu::InsertLocalization(morphName, morphName, "");
     return static_cast<std::uint32_t>(type);
   }
   logger::warn("[InflationManager] Inflation '{}' already registered.", morphName);
@@ -55,12 +57,14 @@ void SetInflation(RE::Actor* actor, Morph::MorphType type, float value)
   if (!actor)
     return;
 
+  auto clampedValue = std::clamp(value, Morph::GetMinValue(type), Morph::GetMorphData(type).max);
+
   if (actor->GetActorBase()->IsUnique()) {
     RE::FormID formID              = actor->GetFormID();
-    inflationDataMap[formID][type] = value;
+    inflationDataMap[formID][type] = clampedValue;
   } else
-    runtimeInflationDataMap[actor][type] = value;
-  Morph::SetMorphByType(actor, type, value);
+    runtimeInflationDataMap[actor][type] = clampedValue;
+  Morph::SetMorphByType(actor, type, clampedValue);
   Morph::ApplyMorphs(actor);
 }
 
@@ -74,6 +78,7 @@ void ModInflation(RE::Actor* actor, Morph::MorphType type, float value)
     if (auto it = inflationDataMap.find(formID); it != inflationDataMap.end()) {
       if (auto typeIt = it->second.find(type); typeIt != it->second.end()) {
         typeIt->second += value;
+        typeIt->second = std::clamp(typeIt->second, Morph::GetMinValue(type), Morph::GetMorphData(type).max);
         Morph::SetMorphByType(actor, type, typeIt->second);
         Morph::ApplyMorphs(actor);
       }
@@ -82,6 +87,7 @@ void ModInflation(RE::Actor* actor, Morph::MorphType type, float value)
     if (auto it = runtimeInflationDataMap.find(actor); it != runtimeInflationDataMap.end()) {
       if (auto typeIt = it->second.find(type); typeIt != it->second.end()) {
         typeIt->second += value;
+        typeIt->second = std::clamp(typeIt->second, Morph::GetMinValue(type), Morph::GetMorphData(type).max);
         Morph::SetMorphByType(actor, type, typeIt->second);
         Morph::ApplyMorphs(actor);
       }

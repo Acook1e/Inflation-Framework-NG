@@ -46,8 +46,6 @@ inline void onPostPostLoad()
 inline void onDataLoaded()
 {
   Menu::GetSingleton();
-  InflationManager::RegisterInflation("BreastHeight", 0.0f, 2.0f);
-  Menu::InsertLocalization("BreastHeight", "Breast Height", "Adjust the height of the breasts.");
 }
 
 inline void onEnterGame() {}
